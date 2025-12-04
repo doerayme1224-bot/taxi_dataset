@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Far Will Your Taxi Ride Go?</title>
+</head>
+<body>
+    <h1>How Far Will Your Taxi Ride Go?</h1>
+    <form action="/predict" method="POST">
+        <label for="fare">Fare(in USD):</label>
+        <input type="text" name="fare" required><br>
+        <label for="tip">Tip(in USD):</label>
+        <input type="text" name="tip" required><br>
+        <label for="tolls">Toll Price(in USD):</label>
+        <input type="text" name="tolls" required><br>
+        <label for="total">Total Ride Cost(in USD):</label>
+        <input type="text" name="total" required><br>
+        <button type="submit">Predict</button>
+    </form>
+
+    {% if prediction_test %}
+        <h2>{{ prediction_test }}</h2>
+    {% endif %}
+</body>
+</html>
