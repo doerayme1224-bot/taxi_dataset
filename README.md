@@ -24,51 +24,89 @@ The purpose of this project is to develop a model which can predict the distance
 1. dropping them, I didn't want synthetic data to manipulate the performance of my model
 **EX:**
 ```python
-#1: dropping all the na values and saving them in a variable
+#dropping all the na values and saving them in a variable
 sub = df.dropna()
-#2: turning that subset into a csv with `to_csv`
-sub.to_csv('data/cleaned_universities.csv')
 ```
-**important to convert to a csv for later ease of use.**
+- Then I had to handle object values, which I did two ways:
+1. Using `.replace()`
+```python
+borough_val = ['Manhattan', 'Queens', 'Brooklyn', 'Bronx', 'Staten Island']
+borough_dum = [1, 2, 3, 4, 5]
+# assigned to variables, one with the actual values...
+# one with what I wanted to replace those values with
+
+sub['pickup_borough'] = sub['pickup_borough'].replace(to_replace= borough_val, value= borough_dum)
+sub['dropoff_borough'] = sub['dropoff_borough'].replace(to_replace= borough_val, value= borough_dum)
+# used the to replace parameter as I wanted to change those.
+# used the value parameter, which was the values I wanted from the method
+# saved changes that I made to those column
+```
+2. using `pd.Categorical()`
+```python
+sub['color'] = pd.Categorical(sub['color'], categories = ['yellow', 'green'], ordered = True)
+sub['payment'] = pd.Categorical(sub['payment'], categories= ['credit card', 'cash'], ordered = True)
+# changes the string value types to categorical ones by using pd.Categorical
+
+sub['color'] = sub['color'].cat.codes
+sub['payment'] = sub['payment'].cat.codes
+# used .cat.codes to change the categorical data types to numerical ones
+# saved changes that I made to those column
+```
+- Lastly, I decided to drop two columns, as I felt they would've been to confusing for an application
+```python
+sub_2 = sub.drop(columns = ['pickup_zone','dropoff_zone'], axis = 1)
+# dropped these columns, cause using them for a flask app would be confusing
+```
+- after all of that, I saved the changes by pickling the dataset, and read in the clean data
+```python
+sub_2.to_pickle('data/cleaned_taxis_dataset')
+# pickled the dataset as I wanted to keep the datetime objects as is (in case they were useful)
+
+data = pd.read_pickle('data/cleaned_taxis_dataset')
+```
+## EDA
 ### key visuals
-#### 1. A heatmap of Correlations of In-State Tuition
-![heatmap of correlation](Model_Visuals/correlation_of_tuition_and_features.png)
+#### 1. A heatmap of Correlations of 
+![heatmap of correlation](visuals/heatmap.png)
 **a heatmap which shows the correlations between different numerical columns, this was helpful when it came to selecting features in order to create the model**
-#### 2. A Scatterplot of Tuition and Board Costs
-![Scatter plot](Model_Visuals/in_state_tuition_by_board.png) 
-**a scatterplot that shows the cost of in-state tuition by the board cost, and they are grouped by wether the school is public or private. shows us that public schools have lower in-state tuition costs than private schools, but the cost betwen the Board isn't to different between public and private schools (private schools do however appear to have a higher board cost on average compared to public schools)**
-#### 3. A Scatterplot of Tuition and Student Faculty Ratio's
-![scatter plot 2](Model_Visuals/in_state_tuition_by_student_faculty_ratio.png) 
-**A Scatterplot showing the cost of in-state tuition by the student faculty ratio, and they are grouped by wether the school is public or private. Shows us that schools with higher student faculty ratio's tend to have lower in-state tuition costs. also private schools seem to have lower student facult ratio's then public schools (but there are some outliers)**
+#### 2. A Histogram of The Distance
+![Histogram](visuals/histogram.png) 
+**a histogram that shows the distribution of the Distance target variable. Shows us that the average distance for most taxi rides is around 1 mile, which is quite short**
+#### 3. A Regressionplot of Distance and Tips
+![regression plot](visuals/regplot_tip.png) 
+**A Regressionplot that shows the relationship between the Distance of a taxi trip and the amount the rider tipped. They have a slighty positive relationship. The most interesting thing about this visualization though is that it shows us the difference in how people tip. Peopl appear to be either really generous, or not at all**
+#### 4. A Regressionplot of Distance and the Total Cost
+![regression plot 2](visuals/regplot_total.png) 
+**A Regressionplot which shows us the distance of a taxi trip by the total the rider spent for the taxi trip. Very Important as it shows us a feature which correlates strongly with the Target Variable, which can be a great tool later on**
 ## Model Performance
 ### Feature Selection
 **I decided to chose these features...**
-1. Public (1)/ Private (2)
-2. board
-3. Graduation rate
-4. % new stud. from top 10%
-5. % new stud. from top 25%
-6. room
-7. stud./fac. ratio
-I chose them as they correlated strongly with the target variable (In-State Tuition) with about being *HEAVILY* related (Like the out-of-state tuition).
+1. fare
+2. tip
+3. tolls
+4. total
+I chose them as,of the available features, they had te best correlations with the target variable `distance`
 ### Model Selection
 **I chose several models...**
 1. Linear Regression
 2. Decission Tree Regressor
 3. Random Forest Regressor
 4. K Nearest Neighbors Regressor
-**chose these because i'm used to using them**
-### Evaluation Metrics
+5. Lasso
 
-| Model             | RMSE     | R²       |MAPE|
-|-------------------|----------|----------|------|
-| Linear Regressor |1802.64$|89.551%|26.774%|
-|Decission Tree Regressor|2612.58$|78.051%|33.512%|
-|Random Forest Regressor|1809.52$|89.558%|23.016%|
-|K Nearest Neighbor Regressor|1864.03$|87.077%|63.990%|
+**chose these because i'm used to using them**
+### Evaluation Metric
+
+| Model             |    R²   | 
+|-------------------|----------|
+| Linear Regressor |88.447 %|
+|Decission Tree Regressor|87.336 % |
+|Random Forest Regressor|88.229 %|
+|K Nearest Neighbor Regressor|88.959 %|
+|Lasso | 87.557 % |
 ### pickling
-I chose to pickle the random forest model as it had the best R squared score and the best MAPE score. while its rmse was worse then linear regression, it wasn't worse by much, which ads to the reason as to why I chose the randome forest model to pickle
+I chose to pickle the K Nearest Neighbor Regressor, as it had the best R squared score, I was also interested in utilizing a pipline to create the app, in order to develop predictions as that is something that i had learned about and liked
 ## conclusion
 #### my analysis was able to create a model that is effecctive at developing predictions, it could be used to...
-1. forecast the price of future higher eduaction projects
-2. be used to estimate future prices of pre-existing schools by plugging in projected values
+- give predictions to individuals using an app, to estimate how far they could go with as little money as possible
+- potentially be used with ride share apps to do a similar thing
